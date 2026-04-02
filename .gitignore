@@ -34,6 +34,14 @@ coverage.xml
 .pytest_cache
 .tox/
 
+# serialized files 
+*.pickle
+*.pkl
+*.joblib
+*.h5
+*.hdf5
+*.json
+
 # Sphinx documentation
 docs/_build
 
