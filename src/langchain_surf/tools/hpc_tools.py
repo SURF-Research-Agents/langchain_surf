@@ -14,6 +14,14 @@ from langchain_surf.tools.tools.structured import StructuredTool
 from langchain_surf.tools.tools.simple import Tool
 
 
+class surf_tools:
+
+    def snellius(*args, **kwargs): 
+        if kwargs['hpc'] is not None:
+            kwargs['slurm_data']['url'] = "https://slurm.snellius.surf.nl"
+        return tool(*args, **kwargs)
+
+
 @overload
 def tool(
     *,
@@ -76,7 +84,6 @@ def tool(
     extras: dict[str, Any] | None = None,
     hpc: dict[str, Any] | None = None,
 ) -> Callable[[Callable | Runnable], BaseTool]: ...
-
 
 def tool(
     name_or_callable: str | Callable | None = None,
