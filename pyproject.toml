@@ -24,6 +24,9 @@ classifiers = [
 dependencies = [
     'langgraph',
     'langchain',
+    'langchain_community',
+    'deepagents'
+    'Flask'
     'langchain_openai',
     'boto3',
     'dotenv',

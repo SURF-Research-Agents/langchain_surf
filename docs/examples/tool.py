@@ -3,16 +3,20 @@ from typing import Optional
 import json 
 from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
-from langchain_surf.tools.hpc_tools import tool
-# from langchain.tools import tool
+from langchain_surf.tools.hpc_tools import tool as surf_tool
+from langchain_surf import ChatWillma   
+from langchain.tools import tool
 from dotenv import load_dotenv
 
-load_dotenv(dotenv_path="../../.env")
+
+load_dotenv('/Users/renau001/Documents/projects/ai/SRA/.env')
 
 api_key = os.getenv("AIHUB_API_KEY")
 base_url = "https://willma.surf.nl/api/v0"
-model = "Llama 3.1 8B Instruct"
 
+# model = "Llama 3.1 8B Instruct"
+model = "default-text-medium"
+# model = "mistralai/Mistral-Small-3.2-24B-Instruct-2506"
 
 slurm_jwt = os.getenv("SLURM_JWT")
 os_key = os.getenv("OS_KEY")
@@ -32,13 +36,11 @@ os_data = {
     "os_secret_key": os_secret,
 }
 
-
-model = ChatOpenAI(
+model = ChatWillma(
     model=model,
     temperature=0.1,
     max_tokens=1000,
     timeout=30,
-    base_url=base_url,
     api_key=api_key,
 )
 
@@ -47,7 +49,7 @@ hpc_opt = {
     'os_data': os_data
 }
 
-@tool(hpc=hpc_opt)
+@surf_tool(hpc=hpc_opt)
 def calculate_expression(expression):
     """Evaluate the mathematical expression and return the result."""
     
