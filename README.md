@@ -1,20 +1,4 @@
-## Badges
-
-(Customize these badges with your own links, and check https://shields.io/ or https://badgen.net/ to see which other badges are available.)
-
-| fair-software.eu recommendations | |
-| :-- | :--  |
-| (1/5) code repository              | [![github repo badge](https://img.shields.io/badge/github-repo-000.svg?logo=github&labelColor=gray&color=blue)](https://github.com/SURF-Research-Agents/langchain_surf) |
-| (2/5) license                      | [![github license badge](https://img.shields.io/github/license/SURF-Research-Agents/langchain_surf)](https://github.com/SURF-Research-Agents/langchain_surf) |
-| (3/5) community registry           | [![RSD](https://img.shields.io/badge/rsd-langchain_surf-00a3e3.svg)](https://www.research-software.nl/software/langchain_surf) [![workflow pypi badge](https://img.shields.io/pypi/v/langchain_surf.svg?colorB=blue)](https://pypi.python.org/project/langchain_surf/) |
-| (4/5) citation                     | [![DOI](https://zenodo.org/badge/DOI/<replace-with-created-DOI>.svg)](https://doi.org/<replace-with-created-DOI>)|
-| (5/5) checklist                    | [![workflow cii badge](https://bestpractices.coreinfrastructure.org/projects/<replace-with-created-project-identifier>/badge)](https://bestpractices.coreinfrastructure.org/projects/<replace-with-created-project-identifier>) |
-| howfairis                          | [![fair-software badge](https://img.shields.io/badge/fair--software.eu-%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8B-yellow)](https://fair-software.eu) |
-| **Other best practices**           | &nbsp; |
-| Static analysis                    | [![workflow scq badge](https://sonarcloud.io/api/project_badges/measure?project=SURF-Research-Agents_langchain_surf&metric=alert_status)](https://sonarcloud.io/dashboard?id=SURF-Research-Agents_langchain_surf) |
-| Coverage                           | [![workflow scc badge](https://sonarcloud.io/api/project_badges/measure?project=SURF-Research-Agents_langchain_surf&metric=coverage)](https://sonarcloud.io/dashboard?id=SURF-Research-Agents_langchain_surf) || Documentation                      | [![Documentation Status](https://readthedocs.org/projects/langchain_surf/badge/?version=latest)](https://langchain_surf.readthedocs.io/en/latest/?badge=latest) || **GitHub Actions**                 | &nbsp; |
-| Build                              | [![build](https://github.com/SURF-Research-Agents/langchain_surf/actions/workflows/build.yml/badge.svg)](https://github.com/SURF-Research-Agents/langchain_surf/actions/workflows/build.yml) |
-| Citation data consistency          | [![cffconvert](https://github.com/SURF-Research-Agents/langchain_surf/actions/workflows/cffconvert.yml/badge.svg)](https://github.com/SURF-Research-Agents/langchain_surf/actions/workflows/cffconvert.yml) || SonarCloud                         | [![sonarcloud](https://github.com/SURF-Research-Agents/langchain_surf/actions/workflows/sonarcloud.yml/badge.svg)](https://github.com/SURF-Research-Agents/langchain_surf/actions/workflows/sonarcloud.yml) |## How to use langchain_surf
+## How to use langchain_surf
 
 Connect LangChain with SURF services
 
@@ -30,9 +14,119 @@ cd langchain_surf
 python -m pip install .
 ```
 
-## Documentation
+## Example
 
-Include a link to your project's full documentation here.
+### Simple Chat bot
+
+The library contains a simple chat interface with Willma. This largely a convenience class that wraps the `ChatOpenAI` class.
+
+```python
+import os
+from langchain_surf import ChatWillma   
+from dotenv import load_dotenv
+
+load_dotenv('../../.env')  
+api_key = os.getenv("AIHUB_API_KEY")
+model = "default-text-large"
+
+
+model = ChatWillma(
+    model=model,
+    temperature=0.1,
+    max_tokens=1000,
+    timeout=30,
+    api_key=api_key,
+)
+
+result = model.invoke("What is the capital of France?")
+print(result)
+```
+
+### HPC Tools
+
+The library contains a wrapper to define tools that are executed on HPC via slurm (e.g. snellius). An example can be found [here](./examples/tool.py). 
+To use you need to:
+
+1. create a directory on snellius at `~/test_rsa`. This is where the files of the job will be created and is hardcoded for now [here](https://github.com/SURF-Research-Agents/langchain_surf/blob/4652e52dfa547240a74fe967c50f5a13d7463164/src/langchain_surf/tools/utils/slurm_connector.py#L48)
+
+2. create a virtual environemnt at `~/test_rsa/.venv`. This environment must contain all the dependencies needed to execute the tools. It should also use exactly the same python version as the one used in the local environment (e.g. your laptop) to run the [example](./examples/tool.py)
+
+3. you need to set up the objecstore credential on snellius and your local machine. Follow the instruction [here](https://servicedesk.surf.nl/wiki/spaces/WIKI/pages/112591355/AWS+S3+client+awscli). As explained in this page you will need to create a `~/.aws/config` file and a `~/.aws/credentials` files. You should have received the keys and secret keys from our object store team.
+
+4. Get a SLURM JWT from snellius. Log in on snellius and type `scontrol token` copy the token given as an answer
+
+5. Put all your credentials in a .env file:
+    -   AIHUB_API_KEY : Token from AI Hub
+    -   SLURM_JWT : SLURM Token from snellius
+    -   OS_KEY : Object store key
+    -   OS_SECRET_KEY: Object store secret key
+
+Once all of that is set up you can use execute this [file](./examples/tool.py). and it should launch a calculation on snellius and return the result back. The file is roughly as follow:
+
+
+```python
+import os
+from typing import Optional
+import json 
+from langchain.agents import create_agent
+from langchain_surf import ChatWillma   
+from langchain_surf.tools.hpc_tools import tool
+from dotenv import load_dotenv
+
+# load the credentials
+load_dotenv(dotenv_path="/path/to/.env")
+api_key = os.getenv("AIHUB_API_KEY")
+....
+
+# create the slurm data
+slurm_data = {
+    "url": "https://slurm.snellius.surf.nl",
+    "api_ver": "v0.0.43",
+    "user_name": "nicolasr",
+    "slurm_jwt": slurm_jwt,
+}
+
+# create the onject store data
+os_data = {
+    "url": "https://objectstore.surf.nl",
+    "os_access_key": os_key,
+    "os_secret_key": os_secret,
+}
+
+# put all the slurm + object store together
+hpc_opt = {
+    'slurm_data': slurm_data,
+    'os_data': os_data
+}
+
+# create the model
+model = ChatWillma(
+    model="default-text-large",
+    temperature=0.1,
+    max_tokens=1000,
+    timeout=30,
+    api_key=api_key,
+)
+
+# HPC tool Wrapper
+# This toll will be executed on Snellius
+@tool(hpc=hpc_opt)
+def calculate_expression(expression):
+    """Evaluate the mathematical expression and return the result."""
+    ....
+    return 
+
+# Crete the agent and give it the tool
+agent = create_agent(model, 
+                     tools=[calculate_expression],
+                     system_prompt="You are a helpful assistant. Be concise and accurate.")
+
+# invoke it and print the result
+result = agent.invoke(
+    {"messages": [{"role": "user", "content": "What's 3+4?"}]}
+)
+print(result)
+```
 
 ## Contributing
 
