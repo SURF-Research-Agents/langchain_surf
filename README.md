@@ -1,5 +1,4 @@
-## How to use langchain_surf
-
+# langchain_surf
 Connect LangChain with SURF services
 
 The project setup is documented in [project_setup.md](project_setup.md). Feel free to remove this document (and/or the link to this document) if you don't need it.
@@ -14,9 +13,7 @@ cd langchain_surf
 python -m pip install .
 ```
 
-## Example
-
-### Simple Chat bot
+## Simple Chat bot
 
 The library contains a simple chat interface with Willma. This largely a convenience class that wraps the `ChatOpenAI` class.
 
@@ -42,7 +39,7 @@ result = model.invoke("What is the capital of France?")
 print(result)
 ```
 
-### HPC Tools
+## HPC Tools
 
 The library contains a wrapper to define tools that are executed on HPC via slurm (e.g. snellius). An example can be found [here](./examples/tool.py). 
 To use you need to:
