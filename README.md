@@ -41,12 +41,12 @@ print(result)
 
 ## Chat Bot with HPC Tools
 
-The library contains a wrapper to define tools that are executed on HPC via slurm (e.g. snellius). An example can be found [here](./examples/tool.py). 
+The library contains a wrapper to define tools that are executed on HPC via slurm (e.g. snellius). An example can be found [here](https://github.com/SURF-Research-Agents/langchain_surf/blob/main/docs/examples/tool.py). 
 To use you need to:
 
 1. create a directory on snellius at `~/test_rsa`. This is where the files of the job will be created and is hardcoded for now [here](https://github.com/SURF-Research-Agents/langchain_surf/blob/4652e52dfa547240a74fe967c50f5a13d7463164/src/langchain_surf/tools/utils/slurm_connector.py#L48)
 
-2. create a virtual environemnt at `~/test_rsa/.venv`. This environment must contain all the dependencies needed to execute the tools. It should also use exactly the same python version as the one used in the local environment (e.g. your laptop) to run the [example](./examples/tool.py)
+2. create a virtual environemnt at `~/test_rsa/.venv`. This environment must contain all the dependencies needed to execute the tools. It should also use exactly the same python version as the one used in the local environment (e.g. your laptop) to run the [example](https://github.com/SURF-Research-Agents/langchain_surf/blob/main/docs/examples/tool.py)
 
 3. you need to set up the objecstore credential on snellius and your local machine. Follow the instruction [here](https://servicedesk.surf.nl/wiki/spaces/WIKI/pages/112591355/AWS+S3+client+awscli). As explained in this page you will need to create a `~/.aws/config` file and a `~/.aws/credentials` files. You should have received the keys and secret keys from our object store team.
 
@@ -58,7 +58,7 @@ To use you need to:
     -   OS_KEY : Object store key
     -   OS_SECRET_KEY: Object store secret key
 
-Once all of that is set up you can use execute this [file](./examples/tool.py). and it should launch a calculation on snellius and return the result back. The file is roughly as follow:
+Once all of that is set up you can use execute this [file](https://github.com/SURF-Research-Agents/langchain_surf/blob/main/docs/examples/tool.py). and it should launch a calculation on snellius and return the result back. The file is roughly as follow:
 
 
 ```python
