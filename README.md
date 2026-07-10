@@ -1,7 +1,6 @@
 # langchain_surf
 Connect LangChain with SURF services
 
-The project setup is documented in [project_setup.md](project_setup.md). Feel free to remove this document (and/or the link to this document) if you don't need it.
 
 ## Installation
 
@@ -10,7 +9,8 @@ To install langchain_surf from GitHub repository, do:
 ```console
 git clone git@github.com:SURF-Research-Agents/langchain_surf.git
 cd langchain_surf
-python -m pip install .
+uv venv .venv
+uv pip install -e .
 ```
 
 ## Simple Chat bot
@@ -39,7 +39,7 @@ result = model.invoke("What is the capital of France?")
 print(result)
 ```
 
-## HPC Tools
+## Chat Bot with HPC Tools
 
 The library contains a wrapper to define tools that are executed on HPC via slurm (e.g. snellius). An example can be found [here](./examples/tool.py). 
 To use you need to:
