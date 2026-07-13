@@ -3,7 +3,7 @@ import json
 
 
 from langchain_surf.tools.utils.slurm_connector import SLURMAPIConnector
-from langchain_surf.tools.utils.object_store_connector import ObjectStoreConnector
+from langchain_surf.tools.utils.object_store_connector_cli import ObjectStoreConnectorCLI
 
 class HPCFunc:
     def __init__(self, 
@@ -33,10 +33,9 @@ class HPCFunc:
                 }
 
         self.slurm_connector = SLURMAPIConnector(slurm_data, slurm_default_settings)
-        self.os_connector = ObjectStoreConnector(os_data)
+        self.os_connector = ObjectStoreConnectorCLI(os_data)
 
     def _write_python_script(self):
-
         file_str = []
         file_str += ["import dill"]
         file_str += ["import json"]
@@ -44,7 +43,7 @@ class HPCFunc:
         file_str += ["    exec_tool = dill.load(fopen)"]
         file_str += ["status = exec_tool()"]
         
-        with open(self.python_file_name, 'w') as file:
+        with open(self.python_file_name, 'w', encoding='utf-8') as file:
             file.write('\n'.join(file_str))
             
         return '\n'.join(file_str)
@@ -64,13 +63,18 @@ class HPCFunc:
         
         # defined the function to be serialized
         def serialized_call():
+            """Serializes and executes the wrapped function, writing JSON output.
+
+            This function is pickled with dill, uploaded to the object store,
+            and executed on a remote HPC node via SLURM.
+            """
             try:
-                with open(self.json_output_file_name, 'w') as file: 
+                with open(self.json_output_file_name, 'w', encoding='utf-8') as file: 
                     json.dump(self.func(*args, **kwargs), file, indent=4)
                 return True
             except Exception as e:
                 print(e)
-                return 
+                return False
             
         # serialize the function
         with open(self.dill_file_name, 'wb') as fopen:
@@ -119,8 +123,17 @@ if __name__ == "__main__":
         "os_secret_key": os_secret,
     }
 
-    def sum(x,y): 
-        return x+y
+    def custom_sum(x, y):
+        """Return the sum of two numbers.
 
-    hpc_sum = HPCFunc(sum, slurm_data=slurm_data, os_data=os_data)
+        Args:
+            x: First number to add.
+            y: Second number to add.
+
+        Returns:
+            The result of ``x + y``.
+        """
+        return x + y
+
+    hpc_sum = HPCFunc(custom_sum, slurm_data=slurm_data, os_data=os_data)
     print(hpc_sum(1,2))

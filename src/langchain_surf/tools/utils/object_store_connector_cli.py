@@ -2,7 +2,7 @@ import json
 import os
 import tempfile
 import uuid
-
+import shutil
 import subprocess
 
 
@@ -268,6 +268,60 @@ class ObjectStoreConnectorCLI:
         finally:
             os.unlink(tmp_path)
 
+    def read_files_from_os(self, objectname):
+        """Reads file(s) from the Object Store using the AWS CLI.
+
+        Downloads the object(s) via ``aws s3 cp`` to a temporary
+        directory, reads their contents, and cleans up the temp files.
+
+        Parameters
+        ----------
+        objectname : str or list of str
+            Object key(s) in the bucket to read.
+
+        Returns
+        -------
+        list of str
+            The decoded content of each requested object.
+
+        Raises
+        ------
+        RuntimeError
+            If any AWS CLI command returns a non-zero exit code.
+        """
+        if not isinstance(objectname, list):
+            objectname = [objectname]
+
+        bucket = self.settings["bucketname"]
+        tmp_dir = tempfile.mkdtemp()
+        contents = []
+
+        try:
+            for obj in objectname:
+                local_path = os.path.join(tmp_dir, os.path.basename(obj))
+                print(f"Reads object {obj} from bucket {bucket} via AWS CLI")
+
+                cmd = [
+                    "aws",
+                    "s3api",
+                    "get-object",
+                    "--bucket", bucket,
+                    "--key", obj,
+                    local_path
+                ]
+                cmd_result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+                if cmd_result.returncode != 0:
+                    raise RuntimeError(
+                        f"Failed to get {obj} via CLI: {cmd_result.stderr.strip()}"
+                    )
+
+                with open(local_path, "r", encoding="utf-8") as f:
+                    contents.append(f.read())
+
+            return contents
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+
 
 if __name__ == "__main__":
     import argparse
@@ -284,7 +338,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--action",
         type=str,
-        choices=["create", "upload", "put", "purge", "delete", "all"],
+        choices=["create", "upload", "put", "purge", "delete", "read", "all"],
         default="create",
         help="Action to perform (default: all)",
     )
@@ -292,8 +346,9 @@ if __name__ == "__main__":
         "--file",
         type=str,
         default=None,
-        help="File to upload (required for --action upload)",
+        help="File to upload/read (required for --action upload/read)",
     )
+
     args = parser.parse_args()
 
     settings = {"bucketname": args.bucket}
@@ -314,5 +369,12 @@ if __name__ == "__main__":
 
     if args.action in ("delete", "all"):
         connector.delete_bucket()
+
+    if args.action in ("read", "all"):
+        if args.file:
+            file_data = connector.read_files_from_os(args.file)
+            print(file_data)
+        else:
+            raise ValueError("Specify a file to read")
 
     print("Done.")
