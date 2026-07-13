@@ -88,6 +88,17 @@ class HPCFunc:
         self.os_data = self.os_connector.settings
 
     def _write_python_script(self):
+        """Write a Python wrapper script that loads and executes the serialized function.
+
+        The generated script imports ``dill`` and ``json``, loads the pickled
+        function from ``self.dill_file_name``, calls it, and writes the result
+        to ``self.json_output_file_name``.
+
+        Returns
+        -------
+        str
+            The content of the generated Python script as a string.
+        """
         file_str = []
         file_str += ["import dill"]
         file_str += ["import json"]
@@ -101,6 +112,20 @@ class HPCFunc:
         return '\n'.join(file_str)
 
     def _bash_script(self):
+        """Generate a bash script for downloading, executing, and uploading results.
+
+        The generated script:
+        1. Activates the virtual environment.
+        2. Creates and enters a directory named after the object store bucket.
+        3. Syncs files from the object store to the local directory.
+        4. Executes the Python wrapper script.
+        5. Syncs the results back to the object store.
+
+        Returns
+        -------
+        str
+            The content of the generated bash script as a string.
+        """
         file_str = []
         file_str += ["#!/bin/bash"]
         file_str += ['source .venv/bin/activate']
@@ -112,6 +137,40 @@ class HPCFunc:
         return '\n'.join(file_str)
 
     def __call__(self, *args, **kwargs):
+        """Execute the wrapped function on an HPC cluster via SLURM.
+
+        This method serializes the wrapped function using ``dill``, uploads
+        it to the object store, submits a SLURM job, waits for completion,
+        and retrieves the JSON output.
+
+        The workflow is:
+        1. Serialize the function with its arguments using ``dill``.
+        2. Write a Python wrapper script.
+        3. Create a bucket and upload the serialized function and wrapper.
+        4. Submit and monitor a SLURM job.
+        5. Read the JSON output from the object store.
+        6. Clean up temporary files.
+
+        Parameters
+        ----------
+        *args : tuple
+            Positional arguments to pass to the wrapped function.
+        **kwargs : dict
+            Keyword arguments to pass to the wrapped function.
+
+        Returns
+        -------
+        result
+            The JSON-parsed result from the executed function.
+
+        Examples
+        --------
+        >>> def add(a, b):
+        ...     return a + b
+        >>> hpc_func = HPCFunc(add, slurm_data=slurm_data, os_data=os_data)
+        >>> hpc_func(1, 2)
+        3
+        """
         
         try:
             # defined the function to be serialized
