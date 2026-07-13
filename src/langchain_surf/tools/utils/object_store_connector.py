@@ -99,7 +99,6 @@ class ObjectStoreConnector:
         print("Creates bucket " + self.settings["bucketname"] + " in Object Store")
         _ = resource.create_bucket(Bucket=self.settings["bucketname"])
 
-
     def delete_bucket(self):
         """Deletes a bucket in the Object Store.
 
@@ -207,7 +206,9 @@ class ObjectStoreConnector:
 
         if isinstance(object_data, str):
             object_data = object_data.encode()
-        resource.put_object(Body=object_data, Bucket=self.settings["bucketname"], Key=objectname)
+        resource.put_object(
+            Body=object_data, Bucket=self.settings["bucketname"], Key=objectname
+        )
 
     def read_files_from_os(self, objectname):
         """Reads a file from the Object Store.
@@ -240,7 +241,9 @@ class ObjectStoreConnector:
         )
         data = []
         for obj in objectname:
-            s3_object = s3_client.get_object(Bucket=self.settings["bucketname"], Key=obj)
+            s3_object = s3_client.get_object(
+                Bucket=self.settings["bucketname"], Key=obj
+            )
             data.append(s3_object["Body"].read().decode("utf-8"))
 
         return data

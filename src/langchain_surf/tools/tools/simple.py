@@ -27,7 +27,7 @@ from langchain_core.tools.base import (
 if TYPE_CHECKING:
     from langchain_core.messages import ToolCall
 
-from langchain_surf.tools.utils.hpc_func import HPCFunc 
+from langchain_surf.tools.utils.hpc_func import HPCFunc
 
 
 class Tool(BaseTool):
@@ -95,11 +95,8 @@ class Tool(BaseTool):
         # For backwards compatibility. The tool must be run with a single input
         all_args = list(args) + list(kwargs.values())
         if len(all_args) != 1:
-            msg = (
-                f"""Too many arguments to single-input tool {self.name}.
-                Consider using StructuredTool instead."""
-                f" Args: {all_args}"
-            )
+            msg = f"""Too many arguments to single-input tool {self.name}.
+                Consider using StructuredTool instead.""" f" Args: {all_args}"
             raise ToolException(msg)
         return tuple(all_args), {}
 
@@ -128,9 +125,9 @@ class Tool(BaseTool):
                 kwargs[config_param] = config
             if self.hpc is not None:
                 print(self.hpc)
-                hpc_func = HPCFunc(self.func, 
-                                   self.hpc['slurm_data'], 
-                                   self.hpc['os_data'])
+                hpc_func = HPCFunc(
+                    self.func, self.hpc["slurm_data"], self.hpc["os_data"]
+                )
                 return hpc_func(*args, **kwargs)
             else:
                 return self.func(*args, **kwargs)
@@ -183,8 +180,9 @@ class Tool(BaseTool):
         description: str,
         return_direct: bool = False,  # noqa: FBT001,FBT002
         args_schema: ArgsSchema | None = None,
-        coroutine: Callable[..., Awaitable[Any]]
-        | None = None,  # This is last for compatibility, but should be after func
+        coroutine: (
+            Callable[..., Awaitable[Any]] | None
+        ) = None,  # This is last for compatibility, but should be after func
         **kwargs: Any,
     ) -> Tool:
         """Initialize tool from a function.

@@ -36,7 +36,8 @@ from langchain_core.utils.pydantic import is_basemodel_subclass
 if TYPE_CHECKING:
     from langchain_core.messages import ToolCall
 
-from langchain_surf.tools.utils.hpc_func import HPCFunc 
+from langchain_surf.tools.utils.hpc_func import HPCFunc
+
 
 class StructuredTool(BaseTool):
     """Tool that can operate on any number of inputs."""
@@ -100,12 +101,12 @@ class StructuredTool(BaseTool):
                 kwargs["callbacks"] = run_manager.get_child()
             if config_param := _get_runnable_config_param(self.func):
                 kwargs[config_param] = config
-            
+
             if self.hpc is not None:
                 print(self.hpc)
-                hpc_func = HPCFunc(self.func, 
-                                   self.hpc['slurm_data'], 
-                                   self.hpc['os_data'])
+                hpc_func = HPCFunc(
+                    self.func, self.hpc["slurm_data"], self.hpc["os_data"]
+                )
                 return hpc_func(*args, **kwargs)
             else:
                 return self.func(*args, **kwargs)

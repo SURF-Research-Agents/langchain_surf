@@ -84,7 +84,8 @@ class ObjectStoreConnectorCLI:
             "aws",
             "s3api",
             "create-bucket",
-            "--bucket", bucket,
+            "--bucket",
+            bucket,
         ]
 
         result = subprocess.run(cmd, capture_output=True, text=True, check=False)
@@ -112,7 +113,8 @@ class ObjectStoreConnectorCLI:
             "aws",
             "s3api",
             "delete-bucket",
-            "--bucket", bucket,
+            "--bucket",
+            bucket,
         ]
 
         result = subprocess.run(cmd, capture_output=True, text=True, check=False)
@@ -141,9 +143,12 @@ class ObjectStoreConnectorCLI:
             "aws",
             "s3api",
             "list-objects-v2",
-            "--bucket", bucket,
+            "--bucket",
+            bucket,
         ]
-        list_result = subprocess.run(list_cmd, capture_output=True, text=True, check=False)
+        list_result = subprocess.run(
+            list_cmd, capture_output=True, text=True, check=False
+        )
         if list_result.returncode != 0:
             raise RuntimeError(
                 f"Failed to list objects via CLI: {list_result.stderr.strip()}"
@@ -152,15 +157,21 @@ class ObjectStoreConnectorCLI:
         stdout = json.loads(list_result.stdout) if list_result.stdout.strip() else {}
         objects = stdout.get("Contents", [])
         if objects:
-            delete_payload = json.dumps({"Objects": [{"Key": obj["Key"]} for obj in objects]})
+            delete_payload = json.dumps(
+                {"Objects": [{"Key": obj["Key"]} for obj in objects]}
+            )
             delete_cmd = [
                 "aws",
                 "s3api",
                 "delete-objects",
-                "--bucket", bucket,
-                "--delete", delete_payload,
+                "--bucket",
+                bucket,
+                "--delete",
+                delete_payload,
             ]
-            del_result = subprocess.run(delete_cmd, capture_output=True, text=True, check=False)
+            del_result = subprocess.run(
+                delete_cmd, capture_output=True, text=True, check=False
+            )
             if del_result.returncode != 0:
                 raise RuntimeError(
                     f"Failed to delete objects via CLI: {del_result.stderr.strip()}"
@@ -171,9 +182,12 @@ class ObjectStoreConnectorCLI:
             "aws",
             "s3api",
             "delete-bucket",
-            "--bucket", bucket,
+            "--bucket",
+            bucket,
         ]
-        result = subprocess.run(delete_bucket_cmd, capture_output=True, text=True, check=False)
+        result = subprocess.run(
+            delete_bucket_cmd, capture_output=True, text=True, check=False
+        )
         if result.returncode != 0:
             raise RuntimeError(
                 f"Failed to delete bucket via CLI: {result.stderr.strip()}"
@@ -255,9 +269,12 @@ class ObjectStoreConnectorCLI:
                 "aws",
                 "s3api",
                 "put-object",
-                "--bucket", bucket,
-                "--key", objectname,
-                "--body", tmp_path,
+                "--bucket",
+                bucket,
+                "--key",
+                objectname,
+                "--body",
+                tmp_path,
             ]
             result = subprocess.run(cmd, capture_output=True, text=True, check=False)
             if result.returncode != 0:
@@ -305,11 +322,15 @@ class ObjectStoreConnectorCLI:
                     "aws",
                     "s3api",
                     "get-object",
-                    "--bucket", bucket,
-                    "--key", obj,
-                    local_path
+                    "--bucket",
+                    bucket,
+                    "--key",
+                    obj,
+                    local_path,
                 ]
-                cmd_result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+                cmd_result = subprocess.run(
+                    cmd, capture_output=True, text=True, check=False
+                )
                 if cmd_result.returncode != 0:
                     raise RuntimeError(
                         f"Failed to get {obj} via CLI: {cmd_result.stderr.strip()}"

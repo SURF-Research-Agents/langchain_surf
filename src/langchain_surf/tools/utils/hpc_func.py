@@ -1,10 +1,13 @@
+"""HPC Function"""
 import json
 import os
-import dill 
-
+import dill
 
 from langchain_surf.tools.utils.slurm_connector import SLURMAPIConnector
-from langchain_surf.tools.utils.object_store_connector_cli import ObjectStoreConnectorCLI as OSConnector
+from langchain_surf.tools.utils.object_store_connector_cli import (
+    ObjectStoreConnectorCLI as OSConnector,
+)
+
 
 class HPCFunc:
     """Wrap a Python function for execution on an HPC cluster via SLURM.
@@ -56,29 +59,32 @@ class HPCFunc:
     ... )
     >>> result = hpc_func(1, 2)
     """
-    def __init__(self,
-                 func,
-                 slurm_data,
-                 os_data=None,
-                 dill_file_name = 'serialized_func.pkl',
-                 json_output_file_name='json_output.json',
-                 python_file_name = 'execute_python_script.py'):
-        
+
+    def __init__(
+        self,
+        func,
+        slurm_data,
+        os_data=None,
+        dill_file_name="serialized_func.pkl",
+        json_output_file_name="json_output.json",
+        python_file_name="execute_python_script.py",
+    ):
+
         self.func = func
         self.dill_file_name = dill_file_name
         self.json_output_file_name = json_output_file_name
         self.python_file_name = python_file_name
 
         slurm_default_settings = {
-                    "output_file_name": "tool.out",
-                    "error_file_name": "tool.err",
-                    "jobname": "tool",
-                    "time": 600,
-                    "partition": "rome",
-                    "nodes": 1,
-                    "tasks": 1,
-                    "cpus_per_task": 1,
-                }
+            "output_file_name": "tool.out",
+            "error_file_name": "tool.err",
+            "jobname": "tool",
+            "time": 600,
+            "partition": "rome",
+            "nodes": 1,
+            "tasks": 1,
+            "cpus_per_task": 1,
+        }
 
         self.slurm_connector = SLURMAPIConnector(slurm_data, slurm_default_settings)
         self.os_connector = OSConnector(os_data)
@@ -104,11 +110,11 @@ class HPCFunc:
         file_str += [f"with open('{self.dill_file_name}', 'rb') as fopen:"]
         file_str += ["    exec_tool = dill.load(fopen)"]
         file_str += ["status = exec_tool()"]
-        
-        with open(self.python_file_name, 'w', encoding='utf-8') as file:
-            file.write('\n'.join(file_str))
-            
-        return '\n'.join(file_str)
+
+        with open(self.python_file_name, "w", encoding="utf-8") as file:
+            file.write("\n".join(file_str))
+
+        return "\n".join(file_str)
 
     def _bash_script(self):
         """Generate a bash script for downloading, executing, and uploading results.
@@ -127,13 +133,13 @@ class HPCFunc:
         """
         file_str = []
         file_str += ["#!/bin/bash"]
-        file_str += ['source .venv/bin/activate']
+        file_str += ["source .venv/bin/activate"]
         file_str += [f'mkdir {self.os_data["bucketname"]}']
         file_str += [f'cd {self.os_data["bucketname"]}']
         file_str += [f"aws s3 sync s3://{self.os_data['bucketname']}/ ."]
         file_str += [f"python {self.python_file_name}"]
         file_str += [f"aws s3 sync . s3://{self.os_data['bucketname']}/"]
-        return '\n'.join(file_str)
+        return "\n".join(file_str)
 
     def __call__(self, *args, **kwargs):
         """Execute the wrapped function on an HPC cluster via SLURM.
@@ -170,7 +176,7 @@ class HPCFunc:
         >>> hpc_func(1, 2)
         3
         """
-        
+
         try:
             # defined the function to be serialized
             def serialized_call():
@@ -180,15 +186,17 @@ class HPCFunc:
                 and executed on a remote HPC node via SLURM.
                 """
                 try:
-                    with open(self.json_output_file_name, 'w', encoding='utf-8') as file:
+                    with open(
+                        self.json_output_file_name, "w", encoding="utf-8"
+                    ) as file:
                         json.dump(self.func(*args, **kwargs), file, indent=4)
                     return True
                 except Exception as e:
                     print(e)
                     return False
-            
+
             # serialize the function
-            with open(self.dill_file_name, 'wb') as fopen:
+            with open(self.dill_file_name, "wb") as fopen:
                 dill.dump(serialized_call, fopen, recurse=False)
 
             # write the python script
@@ -196,14 +204,15 @@ class HPCFunc:
 
             # upload all the files to the object store
             self.os_connector.create_bucket()
-            self.os_connector.upload_files_to_os([self.python_file_name,
-                                                  self.dill_file_name])
-            
-            
+            self.os_connector.upload_files_to_os(
+                [self.python_file_name, self.dill_file_name]
+            )
+
             # submit the job to the SLURM API
-            self.slurm_connector.submit_and_monitor_slurm_job(job_script=self._bash_script(),
-                                                                    monitor_interval=10)
-            
+            self.slurm_connector.submit_and_monitor_slurm_job(
+                job_script=self._bash_script(), monitor_interval=10
+            )
+
             result = self.os_connector.read_files_from_os(self.json_output_file_name)
 
             return result
@@ -217,11 +226,12 @@ class HPCFunc:
 if __name__ == "__main__":
 
     from dotenv import load_dotenv
+
     load_dotenv(dotenv_path="/Users/renau001/projects/ai/SRA/.env")
-    
+
     slurm_jwt = os.getenv("SLURM_JWT")
     api_key = os.getenv("AIHUB_API_KEY")
-    
+
     slurm_data_test = {
         "url": "https://slurm.snellius.surf.nl",
         "api_ver": "v0.0.43",
@@ -242,4 +252,4 @@ if __name__ == "__main__":
         return x + y
 
     hpc_sum = HPCFunc(custom_sum, slurm_data=slurm_data_test)
-    print(hpc_sum(1,2))
+    print(hpc_sum(1, 2))

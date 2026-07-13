@@ -149,13 +149,19 @@ class SLURMAPIConnector:
         if response.status_code == 200:
             response_data = response.json()
             job_in_progress = True
-            job_id = response_data["job_id"]  # check the actual key for job id in the response
+            job_id = response_data[
+                "job_id"
+            ]  # check the actual key for job id in the response
         else:
             job_in_progress = False
-            raise Warning(f"Failed to submit job: {response.status_code} - {response.text}")
+            raise Warning(
+                f"Failed to submit job: {response.status_code} - {response.text}"
+            )
         return job_in_progress, job_id
 
-    def monitor_slurm_job_status(self, job_in_progress: bool, job_id: str, monitor_interval=60):
+    def monitor_slurm_job_status(
+        self, job_in_progress: bool, job_id: str, monitor_interval=60
+    ):
         """Monitors the status of a SLURM job with the given job_id until it is completed.
 
         Parameters
@@ -219,11 +225,11 @@ class SLURMAPIConnector:
 
         Notes:
         -----
-        This function is used to submit a job to the SLURM 
+        This function is used to submit a job to the SLURM
         API and monitor its status until it is completed.
         """
         job_status, job_id = self.submit_job(job_script)
-        job_status = self.monitor_slurm_job_status(job_status,
-                                                   job_id,
-                                                   monitor_interval=monitor_interval)
+        job_status = self.monitor_slurm_job_status(
+            job_status, job_id, monitor_interval=monitor_interval
+        )
         return job_status
