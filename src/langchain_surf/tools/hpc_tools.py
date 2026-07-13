@@ -269,8 +269,6 @@ def tool(
         ```
     """  # noqa: D214, D410, D411  # We're intentionally showing bad formatting in examples
 
-    print(hpc)
-
     def _create_tool_factory(
         tool_name: str,
     ) -> Callable[[Callable | Runnable], BaseTool]:
@@ -316,7 +314,7 @@ def tool(
                 schema = args_schema
 
             if infer_schema or args_schema is not None:
-                print('StructuredTool.from_function')
+                
                 return StructuredTool.from_function(
                     func,
                     coroutine,

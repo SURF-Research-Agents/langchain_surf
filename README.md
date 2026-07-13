@@ -52,13 +52,15 @@ To use you need to:
 
 4. Get a SLURM JWT from snellius. Log in on snellius and type `scontrol token` copy the token given as an answer
 
-5. Put all your credentials in a .env file:
+5. Put all your credentials in a .env file on your laptop:
     -   AIHUB_API_KEY : Token from AI Hub
     -   SLURM_JWT : SLURM Token from snellius
     -   OS_KEY : Object store key
     -   OS_SECRET_KEY: Object store secret key
 
-Once all of that is set up you can use execute this [file](https://github.com/SURF-Research-Agents/langchain_surf/blob/main/docs/examples/tool.py). and it should launch a calculation on snellius and return the result back. The file is roughly as follow:
+Once all of that is set up you can use execute this [file](https://github.com/SURF-Research-Agents/langchain_surf/blob/main/docs/examples/tool.py) and it should launch a calculation on snellius and return the result back. 
+
+The file is roughly as follow:
 
 
 ```python
@@ -130,6 +132,5 @@ print(result)
 If you want to contribute to the development of langchain_surf,
 have a look at the [contribution guidelines](CONTRIBUTING.md).
 
-## Credits
-
+## Credi
 This package was created with [Copier](https://github.com/copier-org/copier) and the [NLeSC/python-template](https://github.com/NLeSC/python-template).

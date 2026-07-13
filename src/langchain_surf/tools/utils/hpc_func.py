@@ -1,6 +1,6 @@
 import dill
 import json 
-from dotenv import load_dotenv 
+
 
 from langchain_surf.tools.utils.slurm_connector import SLURMAPIConnector
 from langchain_surf.tools.utils.object_store_connector import ObjectStoreConnector
@@ -98,6 +98,7 @@ class HPCFunc:
 if __name__ == "__main__":
 
     import os
+    from dotenv import load_dotenv 
     load_dotenv(dotenv_path="/Users/renau001/projects/hpml/ai4science_platform/rsa_langgraph/.env")
     
     slurm_jwt = os.getenv("SLURM_JWT")

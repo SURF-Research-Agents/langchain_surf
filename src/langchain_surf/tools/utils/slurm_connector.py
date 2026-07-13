@@ -78,7 +78,7 @@ class SLURMAPIConnector:
             "X-SLURM-USER-TOKEN": f"{self.settings['slurm_jwt']}",
         }
 
-        print(headers)
+        # print(headers)
 
         payload = {
             "job": {
@@ -98,7 +98,7 @@ class SLURMAPIConnector:
             "script": job_script_str,
         }
 
-        print(payload)
+        # print(payload)
 
         session = requests.Session()
         response = requests.post(

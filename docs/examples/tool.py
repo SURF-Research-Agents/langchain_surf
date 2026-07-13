@@ -2,22 +2,18 @@ import os
 from typing import Optional
 import json 
 from langchain.agents import create_agent
-from langchain_openai import ChatOpenAI
 from langchain_surf.tools.hpc_tools import tool
-# from langchain.tools import tool
+from langchain_surf.chat_models.chat_willma import ChatWillma
 from dotenv import load_dotenv
 
-load_dotenv(dotenv_path="../../.env")
+load_dotenv(dotenv_path="../../../.env")
 
 api_key = os.getenv("AIHUB_API_KEY")
-base_url = "https://willma.surf.nl/api/v0"
-model = "Llama 3.1 8B Instruct"
-
-
+model = "default-text-large"
 slurm_jwt = os.getenv("SLURM_JWT")
 os_key = os.getenv("OS_KEY")
 os_secret = os.getenv("OS_SECRET_KEY")
-api_key = os.getenv("AIHUB_API_KEY")
+
 
 slurm_data = {
     "url": "https://slurm.snellius.surf.nl",
@@ -33,12 +29,11 @@ os_data = {
 }
 
 
-model = ChatOpenAI(
+model = ChatWillma(
     model=model,
     temperature=0.1,
     max_tokens=1000,
     timeout=30,
-    base_url=base_url,
     api_key=api_key,
 )
 
@@ -121,6 +116,6 @@ agent = create_agent(model,
 
 
 result = agent.invoke(
-    {"messages": [{"role": "user", "content": "What's 3+4?"}]}
+    {"messages": [{"role": "user", "content": "What's (12+3)*4?"}]}
 )
 print(result)
