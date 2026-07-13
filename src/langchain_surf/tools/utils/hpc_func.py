@@ -5,7 +5,6 @@ import dill
 
 from langchain_surf.tools.utils.slurm_connector import SLURMAPIConnector
 from langchain_surf.tools.utils.object_store_connector_cli import ObjectStoreConnectorCLI as OSConnector
-# from langchain_surf.tools.utils.object_store_connector import ObjectStoreConnector as OSConnector
 
 class HPCFunc:
     """Wrap a Python function for execution on an HPC cluster via SLURM.
@@ -181,7 +180,7 @@ class HPCFunc:
                 and executed on a remote HPC node via SLURM.
                 """
                 try:
-                    with open(self.json_output_file_name, 'w', encoding='utf-8') as file: 
+                    with open(self.json_output_file_name, 'w', encoding='utf-8') as file:
                         json.dump(self.func(*args, **kwargs), file, indent=4)
                     return True
                 except Exception as e:
@@ -190,19 +189,19 @@ class HPCFunc:
             
             # serialize the function
             with open(self.dill_file_name, 'wb') as fopen:
-              dill.dump(serialized_call, fopen, recurse=False)
+                dill.dump(serialized_call, fopen, recurse=False)
 
             # write the python script
             self._write_python_script()
 
             # upload all the files to the object store
             self.os_connector.create_bucket()
-            self.os_connector.upload_files_to_os([self.python_file_name, 
+            self.os_connector.upload_files_to_os([self.python_file_name,
                                                   self.dill_file_name])
             
             
             # submit the job to the SLURM API
-            self.slurm_connector.submit_and_monitor_slurm_job(job_script=self._bash_script(), 
+            self.slurm_connector.submit_and_monitor_slurm_job(job_script=self._bash_script(),
                                                                     monitor_interval=10)
             
             result = self.os_connector.read_files_from_os(self.json_output_file_name)
@@ -221,8 +220,6 @@ if __name__ == "__main__":
     load_dotenv(dotenv_path="/Users/renau001/projects/ai/SRA/.env")
     
     slurm_jwt = os.getenv("SLURM_JWT")
-    os_key = os.getenv("OS_KEY")
-    os_secret = os.getenv("OS_SECRET_KEY")
     api_key = os.getenv("AIHUB_API_KEY")
     
     slurm_data_test = {
@@ -230,12 +227,6 @@ if __name__ == "__main__":
         "api_ver": "v0.0.43",
         "user_name": "nicolasr",
         "slurm_jwt": slurm_jwt,
-    }
-
-    os_data_test = {
-        "url": "https://objectstore.surf.nl",
-        "os_access_key": os_key,
-        "os_secret_key": os_secret,
     }
 
     def custom_sum(x, y):
