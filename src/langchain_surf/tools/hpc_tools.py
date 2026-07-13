@@ -13,13 +13,12 @@ from langchain_core.tools.base import ArgsSchema, BaseTool
 from langchain_surf.tools.tools.structured import StructuredTool
 from langchain_surf.tools.tools.simple import Tool
 
+# class surf_tools:
 
-class surf_tools:
-
-    def snellius(*args, **kwargs): 
-        if kwargs['hpc'] is not None:
-            kwargs['slurm_data']['url'] = "https://slurm.snellius.surf.nl"
-        return tool(*args, **kwargs)
+#     def snellius(*args, **kwargs):
+#         if kwargs['hpc'] is not None:
+#             kwargs['slurm_data']['url'] = "https://slurm.snellius.surf.nl"
+#         return tool(*args, **kwargs)
 
 
 @overload
@@ -84,6 +83,7 @@ def tool(
     extras: dict[str, Any] | None = None,
     hpc: dict[str, Any] | None = None,
 ) -> Callable[[Callable | Runnable], BaseTool]: ...
+
 
 def tool(
     name_or_callable: str | Callable | None = None,
@@ -314,7 +314,7 @@ def tool(
                 schema = args_schema
 
             if infer_schema or args_schema is not None:
-                
+
                 return StructuredTool.from_function(
                     func,
                     coroutine,
@@ -327,7 +327,7 @@ def tool(
                     parse_docstring=parse_docstring,
                     error_on_invalid_docstring=error_on_invalid_docstring,
                     extras=extras,
-                    hpc=hpc
+                    hpc=hpc,
                 )
             # If someone doesn't want a schema applied, we must treat it as
             # a simple string->string function
@@ -345,7 +345,7 @@ def tool(
                 coroutine=coroutine,
                 response_format=response_format,
                 extras=extras,
-                hpc=hpc
+                hpc=hpc,
             )
 
         return _tool_factory

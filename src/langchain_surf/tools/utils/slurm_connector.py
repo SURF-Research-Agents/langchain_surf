@@ -3,6 +3,45 @@ import requests
 
 
 class SLURMAPIConnector:
+    """Connector for interacting with the SLURM REST API.
+
+    Provides methods to submit jobs, monitor their status, and combine
+    both operations into a single call. Authentication is handled via
+    SLURM username and JWT token passed through the ``settings`` dict.
+
+    Parameters
+    ----------
+    settings : dict
+        Configuration dictionary containing at minimum the required keys
+        (see ``required_settings`` below). Additional keys configure job
+        defaults (partition, time limit, CPU/GPU counts, etc.).
+    default_settings : dict, optional
+        Fallback values for optional job parameters. Defaults to a
+        minimal configuration with a 120-second time limit on the
+        ``rome`` partition.
+
+    required_settings
+        The following keys must be present in ``settings``:
+
+        - ``user_name`` – SLURM username
+        - ``slurm_jwt`` – JWT authentication token
+        - ``url`` – Base URL of the SLURM REST API
+        - ``api_ver`` – API version string (e.g. ``v23``)
+
+    Examples
+    --------
+    >>> settings = {
+    ...     "user_name": "myuser",
+    ...     "slurm_jwt": "abc123token",
+    ...     "url": "https://slurm-cluster.example.com",
+    ...     "api_ver": "v23",
+    ... }
+    >>> connector = SLURMAPIConnector(settings)
+    >>> connector.settings["time"] = 300  # 5 minutes
+    >>> connector.settings["jobname"] = "my_experiment"
+    >>> status, job_id = connector.submit_job("#!/bin/bash\\necho hello")
+    """
+
     def __init__(self, settings, default_settings=None):
         self.settings = settings
 
@@ -66,7 +105,7 @@ class SLURMAPIConnector:
         -------
         job_in_progress : bool
             A boolean indicating if the job is still in progress.
-        JOB_ID : str
+        job_id : str
             The ID of the submitted job.
 
         Notes:
@@ -99,24 +138,31 @@ class SLURMAPIConnector:
         }
 
         # print(payload)
-
-        session = requests.Session()
         response = requests.post(
-            f"{self.settings['url']}/slurm/{self.settings['api_ver']}/job/submit", headers=headers, json=payload
+            f"{self.settings['url']}/slurm/{self.settings['api_ver']}/job/submit",
+            headers=headers,
+            json=payload,
+            timeout=30,
         )
 
         # Check if the request was successful
         if response.status_code == 200:
             response_data = response.json()
             job_in_progress = True
-            JOB_ID = response_data["job_id"]  # check the actual key for job id in the response
+            job_id = response_data[
+                "job_id"
+            ]  # check the actual key for job id in the response
         else:
             job_in_progress = False
-            raise Exception(f"Failed to submit job: {response.status_code} - {response.text}")
-        return job_in_progress, JOB_ID
+            raise Warning(
+                f"Failed to submit job: {response.status_code} - {response.text}"
+            )
+        return job_in_progress, job_id
 
-    def monitor_slurm_job_status(self, job_in_progress: bool, JOB_ID: str, monitor_interval=60):
-        """Monitors the status of a SLURM job with the given JOB_ID until it is completed.
+    def monitor_slurm_job_status(
+        self, job_in_progress: bool, job_id: str, monitor_interval=60
+    ):
+        """Monitors the status of a SLURM job with the given job_id until it is completed.
 
         Parameters
         ----------
@@ -124,7 +170,7 @@ class SLURMAPIConnector:
             A dictionary containing the SLURM API credentials.
         job_in_progress : bool
             A boolean indicating if the job is still in progress.
-        JOB_ID : str
+        job_id : str
             The ID of the job to be monitored.
         monitor_interval : int, optional
             The interval in seconds at which the job status should be checked.
@@ -136,28 +182,29 @@ class SLURMAPIConnector:
 
         Notes:
         -----
-        This function is used to monitor the status of a SLURM job with the given JOB_ID until it is completed.
+        This function is used to monitor the status of a SLURM job with the given job_id until it is completed.
         """
         while job_in_progress:
             response = requests.get(
-                f"{self.settings['url']}/slurm/{self.settings['api_ver']}/job/{JOB_ID}",
+                f"{self.settings['url']}/slurm/{self.settings['api_ver']}/job/{job_id}",
                 headers={
                     "X-SLURM-USER-NAME": f"{self.settings['user_name']}",
                     "X-SLURM-USER-TOKEN": f"{self.settings['slurm_jwt']}",
                 },
+                timeout=30,
             )
 
             response = response.json()
             job_status = response["jobs"][0]["job_state"][0]
             if job_status == "COMPLETED":
                 job_in_progress = False
-                print(f"Job {JOB_ID} completed successfully.")
+                print(f"Job {job_id} completed successfully.")
                 break
             if job_status in ["FAILED", "CANCELLED", "TIMEOUT"]:
                 job_in_progress = False
-                print(f"Job {JOB_ID} failed with state: {job_status}")
+                print(f"Job {job_id} failed with state: {job_status}")
             else:
-                print(f"Job {JOB_ID} is still in progress with state: {job_status}")
+                print(f"Job {job_id} is still in progress with state: {job_status}")
 
             time.sleep(monitor_interval)
 
@@ -178,8 +225,11 @@ class SLURMAPIConnector:
 
         Notes:
         -----
-        This function is used to submit a job to the SLURM API and monitor its status until it is completed.
+        This function is used to submit a job to the SLURM
+        API and monitor its status until it is completed.
         """
         job_status, job_id = self.submit_job(job_script)
-        job_status = self.monitor_slurm_job_status(job_status, job_id, monitor_interval=monitor_interval)
+        job_status = self.monitor_slurm_job_status(
+            job_status, job_id, monitor_interval=monitor_interval
+        )
         return job_status

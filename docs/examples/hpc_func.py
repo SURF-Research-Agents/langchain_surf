@@ -22,8 +22,13 @@ os_data = {
     "os_secret_key": os_secret,
 }
 
-def sum(x,y): 
-    return x+y
+def custom_sum(x, y):
+    """Return the sum of two numbers.
 
-hpc_sum = HPCFunc(sum, slurm_data=slurm_data, os_data=os_data)
+    This function replaces the previous redefinition of the built‑in ``sum``
+    to avoid shadowing the Python built‑in function.
+    """
+    return x + y
+
+hpc_sum = HPCFunc(custom_sum, slurm_data=slurm_data, os_data=os_data)
 print(hpc_sum(1,2))
