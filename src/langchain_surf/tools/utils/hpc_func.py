@@ -98,7 +98,7 @@ class HPCFunc:
 if __name__ == "__main__":
 
     import os
-    from dotenv import load_dotenv 
+    from dotenv import load_dotenv
     load_dotenv(dotenv_path="/Users/renau001/projects/hpml/ai4science_platform/rsa_langgraph/.env")
     
     slurm_jwt = os.getenv("SLURM_JWT")

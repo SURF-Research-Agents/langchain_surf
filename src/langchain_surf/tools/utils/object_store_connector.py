@@ -3,6 +3,42 @@ import boto3
 
 
 class ObjectStoreConnector:
+    """Connector for interacting with an S3-compatible Object Store.
+
+    Provides methods to create, delete, and purge buckets, as well as
+    upload, download, and put raw objects. Authentication is handled via
+    access key / secret key passed through the ``settings`` dict.
+
+    Parameters
+    ----------
+    os_data : dict
+        Configuration dictionary containing at minimum the required keys
+        (see ``required_settings`` below).
+    job_name : str, optional
+        Prefix used when generating a unique bucket name. Defaults to
+        ``"generic"``.
+
+    required_settings
+        The following keys must be present in ``os_data``:
+
+        - ``url`` – S3-compatible endpoint URL
+        - ``os_access_key`` – Access key ID
+        - ``os_secret_key`` – Secret access key
+        - ``bucketname`` – Bucket name (auto-generated with UUID prefix if omitted)
+
+    Examples
+    --------
+    >>> settings = {
+    ...     "url": "https://s3.example.com",
+    ...     "os_access_key": "AKIAIOSFODNN7EXAMPLE",
+    ...     "os_secret_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+    ... }
+    >>> connector = ObjectStoreConnector(settings, job_name="experiment1")
+    >>> connector.create_bucket()
+    >>> connector.upload_files_to_os("results.csv", "results.csv")
+    >>> data = connector.read_files_from_os("results.csv")
+    """
+
     def __init__(self, os_data, job_name="generic"):
         self.settings = os_data
         self.job_name = job_name
@@ -60,12 +96,9 @@ class ObjectStoreConnector:
             aws_secret_access_key=self.settings["os_secret_key"],
         )
 
-        # if self._bucket_exists(self.settings['bucketname']):
-        #     print('Bucket already exists')
-        #     return
-
         print("Creates bucket " + self.settings["bucketname"] + " in Object Store")
         _ = resource.create_bucket(Bucket=self.settings["bucketname"])
+
 
     def delete_bucket(self):
         """Deletes a bucket in the Object Store.
@@ -143,10 +176,6 @@ class ObjectStoreConnector:
             aws_access_key_id=self.settings["os_access_key"],
             aws_secret_access_key=self.settings["os_secret_key"],
         )
-
-        # check if bucket exists and create if not
-        # print("Creates bucket " + self.settings["bucketname"] + " in Object Store")
-        # _ = resource.create_bucket(Bucket=self.settings["bucketname"])
 
         # upload files
         for fn, obj in zip(filename, objectname, strict=True):
