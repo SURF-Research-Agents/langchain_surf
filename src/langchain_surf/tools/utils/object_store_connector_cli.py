@@ -11,7 +11,7 @@ class ObjectStoreConnectorCLI:
 
     Provides the same bucket and object operations as ``ObjectStoreConnector``,
     but all work is delegated to ``aws`` CLI commands rather than the ``boto3``
-    library.
+    library. This avoids to have to pass the OS credentials.
 
     Parameters
     ----------

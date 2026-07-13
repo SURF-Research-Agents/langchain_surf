@@ -14,12 +14,12 @@ from langchain_surf.tools.tools.structured import StructuredTool
 from langchain_surf.tools.tools.simple import Tool
 
 
-class surf_tools:
+# class surf_tools:
 
-    def snellius(*args, **kwargs): 
-        if kwargs['hpc'] is not None:
-            kwargs['slurm_data']['url'] = "https://slurm.snellius.surf.nl"
-        return tool(*args, **kwargs)
+#     def snellius(*args, **kwargs):
+#         if kwargs['hpc'] is not None:
+#             kwargs['slurm_data']['url'] = "https://slurm.snellius.surf.nl"
+#         return tool(*args, **kwargs)
 
 
 @overload
