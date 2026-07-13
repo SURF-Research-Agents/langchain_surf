@@ -103,6 +103,8 @@ class StructuredTool(BaseTool):
                 kwargs[config_param] = config
 
             if self.hpc is not None:
+                if "os_data" not in self.hpc:
+                    self.hpc["os_data"] = None
                 print(self.hpc)
                 hpc_func = HPCFunc(
                     self.func, self.hpc["slurm_data"], self.hpc["os_data"]
