@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from langchain_surf.tools.utils.hpc_func import HPCFunc
+from langchain_surf.tools.utils.hpc_func import hpc_func
 
 load_dotenv('../../../.env')
 
@@ -14,6 +14,7 @@ slurm_data = {
     "slurm_jwt": slurm_jwt,
 }
 
+@hpc_func(slurm_data)
 def custom_sum(x, y):
     """Return the sum of two numbers.
 
@@ -22,6 +23,4 @@ def custom_sum(x, y):
     """
     return x + y
 
-hpc_sum = HPCFunc(custom_sum, slurm_data=slurm_data)
-
-print(hpc_sum(1, 2))
+print(custom_sum(1, 2))

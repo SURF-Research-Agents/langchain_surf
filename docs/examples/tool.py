@@ -19,7 +19,6 @@ slurm_data = {
     "slurm_jwt": slurm_jwt,
 }
 
-
 model = ChatWillma(
     model=model,
     temperature=0.1,

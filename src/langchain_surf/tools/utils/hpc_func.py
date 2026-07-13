@@ -222,34 +222,26 @@ class HPCFunc:
                 if os.path.exists(f):
                     os.unlink(f)
 
+def hpc_func(slurm_data):
+    """Decorator that wraps a function for execution on an HPC cluster via SLURM.
 
-if __name__ == "__main__":
+    Parameters
+    ----------
+    slurm_data : dict
+        Configuration dictionary passed to ``HPCFunc``.
 
-    from dotenv import load_dotenv
+    Returns
+    -------
+    callable
+        A decorator that converts the wrapped function into an ``HPCFunc``.
 
-    load_dotenv(dotenv_path="/Users/renau001/projects/ai/SRA/.env")
-
-    slurm_jwt = os.getenv("SLURM_JWT")
-    api_key = os.getenv("AIHUB_API_KEY")
-
-    slurm_data_test = {
-        "url": "https://slurm.snellius.surf.nl",
-        "api_ver": "v0.0.43",
-        "user_name": "nicolasr",
-        "slurm_jwt": slurm_jwt,
-    }
-
-    def custom_sum(x, y):
-        """Return the sum of two numbers.
-
-        Args:
-            x: First number to add.
-            y: Second number to add.
-
-        Returns:
-            The result of ``x + y``.
-        """
-        return x + y
-
-    hpc_sum = HPCFunc(custom_sum, slurm_data=slurm_data_test)
-    print(hpc_sum(1, 2))
+    Examples
+    --------
+    >>> @run_on_hpc(slurm_data)
+    ... def add(a, b):
+    ...     return a + b
+    >>> result = add(1, 2)  # executes remotely on SLURM
+    """
+    def hpc_decorator(func):
+        return HPCFunc(func, slurm_data=slurm_data)
+    return hpc_decorator
