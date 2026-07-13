@@ -11,21 +11,12 @@ load_dotenv(dotenv_path="../../../.env")
 api_key = os.getenv("AIHUB_API_KEY")
 model = "default-text-large"
 slurm_jwt = os.getenv("SLURM_JWT")
-os_key = os.getenv("OS_KEY")
-os_secret = os.getenv("OS_SECRET_KEY")
-
 
 slurm_data = {
     "url": "https://slurm.snellius.surf.nl",
     "api_ver": "v0.0.43",
     "user_name": "nicolasr",
     "slurm_jwt": slurm_jwt,
-}
-
-os_data = {
-    "url": "https://objectstore.surf.nl",
-    "os_access_key": os_key,
-    "os_secret_key": os_secret,
 }
 
 
@@ -39,7 +30,6 @@ model = ChatWillma(
 
 hpc_opt = {
     'slurm_data': slurm_data,
-    'os_data': os_data
 }
 
 @tool(hpc=hpc_opt)
@@ -112,7 +102,8 @@ def get_weather(location: str) -> str:
 
 agent = create_agent(model, 
                      tools=[search, get_weather, calculate_expression],
-                     system_prompt="You are a helpful assistant. Be concise and accurate.")
+                     system_prompt="You are a helpful assistant. Be concise and accurate." \
+                     "Always Use the tool calculate_expression to evaluate simple mathematical expressions")
 
 
 result = agent.invoke(
