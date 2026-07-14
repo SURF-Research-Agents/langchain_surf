@@ -17,7 +17,11 @@ class ObjectStoreConnectorCLI:
     ----------
     os_data : dict
         Configuration dictionary containing at minimum the required keys
-        (see ``required_settings`` below).
+        (see ``required_settings`` below).  May also contain:
+
+        - ``retention_days`` – Number of days after which objects are expired
+          via a lifecycle policy (default: ``30``).
+
     job_name : str, optional
         Prefix used when generating a unique bucket name. Defaults to
         ``"generic"``.
@@ -32,7 +36,7 @@ class ObjectStoreConnectorCLI:
 
     Examples
     --------
-    >>> connector = ObjectStoreConnectorCLI(os_data={'bucketname':'test_cli'})
+    >>> connector = ObjectStoreConnectorCLI(os_data={'bucketname':'test_cli', 'retention_days':7})
     >>> connector.create_bucket()
     >>> connector.upload_files_to_os("results.csv", "results.csv")
     """
@@ -40,9 +44,9 @@ class ObjectStoreConnectorCLI:
     def __init__(self, os_data=None, job_name="generic"):
         self.settings = os_data if os_data is not None else {}
         self.job_name = job_name
-        required_settings = ["bucketname"]
+        required_settings = ["bucketname", "retention_days"]
 
-        self._update_bucket_name()
+        self._apply_default_settings()
         self._validate_settings(required_settings)
 
     def _get_uuid_bucketname(self):
@@ -56,11 +60,13 @@ class ObjectStoreConnectorCLI:
         iid = str(uuid.uuid4())
         return "sra_" + self.job_name + "_" + iid
 
-    def _update_bucket_name(self):
+    def _apply_default_settings(self):
         """Updates ``self.settings`` with a default bucket name if not provided."""
         if "bucketname" not in self.settings:
             self.settings["bucketname"] = self._get_uuid_bucketname()
-
+        if "retention_days" not in self.settings:
+            self.settings['retention_days'] = 30
+ 
     def _validate_settings(self, required_settings):
         for setting in required_settings:
             if setting not in self.settings:
@@ -93,7 +99,53 @@ class ObjectStoreConnectorCLI:
             raise RuntimeError(
                 f"Failed to create bucket via CLI: {result.stderr.strip()}"
             )
+        self._apply_expiration_lifecycle_policy(bucket)
         return result.stdout
+
+    def _apply_expiration_lifecycle_policy(self, bucket):
+        """Applies a lifecycle rule to expire all objects in the bucket after a given number of days.
+
+        Parameters
+        ----------
+        bucket : str
+            The name of the bucket to configure
+
+        Raises
+        ------
+        RuntimeError
+            If the AWS CLI command returns a non-zero exit code.
+        """
+        retention_days = self.settings["retention_days"]
+        print(
+            f"Applies {retention_days}-day expiration lifecycle policy to bucket {bucket}"
+        )
+
+        lifecycle_config = {
+            "Rules": [
+                {
+                    "ID": f"DeleteObjectsAfter{retention_days}Days_{uuid.uuid4()}",
+                    "Status": "Enabled",
+                    "Filter": {"Prefix": ""},
+                    "Expiration": {"Days": retention_days},
+                }
+            ]
+        }
+
+        cmd = [
+            "aws",
+            "s3api",
+            "put-bucket-lifecycle-configuration",
+            "--bucket",
+            bucket,
+            "--lifecycle-configuration",
+            json.dumps(lifecycle_config),
+        ]
+
+        result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"Failed to set lifecycle policy via CLI: {result.stderr.strip()}"
+            )
 
     def delete_bucket(self):
         """Deletes a bucket in the Object Store using the AWS CLI.
@@ -369,10 +421,16 @@ if __name__ == "__main__":
         default=None,
         help="File to upload/read (required for --action upload/read)",
     )
+    parser.add_argument(
+        "--retention",
+        type=int,
+        default=30,
+        help="Retention period in days before objects are expired (default: 30)",
+    )
 
     args = parser.parse_args()
 
-    settings = {"bucketname": args.bucket}
+    settings = {"bucketname": args.bucket, "retention_days": args.retention}
     connector = ObjectStoreConnectorCLI(os_data=settings, job_name="demo")
 
     if args.action in ("create", "all"):

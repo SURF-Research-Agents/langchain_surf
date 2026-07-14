@@ -228,6 +228,7 @@ class HPCFunc:
             result = self.os_connector.read_files_from_os(self.json_output_file_name)
 
             return result
+
         finally:
             # Clean up temporary files
             for f in (self.python_file_name, self.dill_file_name):
