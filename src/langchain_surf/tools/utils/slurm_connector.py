@@ -49,12 +49,13 @@ class SLURMAPIConnector:
 
         if default_settings is None:
             default_settings = {
-                "jobname": "slurm_api",
-                "time": 120,
+                "jobname": "rsa_tool_call",
+                "time": 600,
                 "partition": "rome",
                 "nodes": 1,
                 "tasks": 1,
                 "cpus_per_task": 1,
+                "tmp_dir":'test_rsa'
             }
 
         self._update_settings(default_settings)
@@ -84,7 +85,7 @@ class SLURMAPIConnector:
         if "error_file_name" not in self.settings:
             self.settings["error_file_name"] = self.settings["jobname"] + ".err"
         if "cwd" not in self.settings:
-            self.settings["cwd"] = "/home/" + self.settings["user_name"] + "/test_rsa/"
+            self.settings["cwd"] = "/home/" + self.settings["user_name"] + '/' + self.settings['tmp_dir'] + '/'
 
     def _validate_settings(self, required_settings):
         for setting in required_settings:
@@ -132,6 +133,7 @@ class SLURMAPIConnector:
                 "cpus_per_task": self.settings["cpus_per_task"],
                 "environment": {
                     "USER": self.settings["user_name"],
+                    "HOME": f"/home/{self.settings["user_name"]}"
                 },
             },
             "script": job_script_str,

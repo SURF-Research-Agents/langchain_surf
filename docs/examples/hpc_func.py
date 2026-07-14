@@ -22,6 +22,8 @@ def custom_sum(x, y):
     """
     return x + y
 
-hpc_sum = HPCFunc(custom_sum, slurm_data=slurm_data)
+hpc_sum = HPCFunc(custom_sum,
+                  slurm_data=slurm_data,
+                  container_image='langchain_surf.sif')
 
 print(hpc_sum(1, 2))
