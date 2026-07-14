@@ -47,6 +47,10 @@ class HPCFunc:
     python_file_name : str, optional
         Filename for the Python wrapper script. Defaults to
         ``'execute_python_script.py'``.
+    container_image : str, optional
+        Path or URI of the container image (Singularity/Apptainer) to run
+        the job inside. If ``None``, the job runs directly on the cluster
+        without a container. Defaults to ``None``.
 
     Examples
     --------
@@ -68,29 +72,23 @@ class HPCFunc:
         dill_file_name="serialized_func.pkl",
         json_output_file_name="json_output.json",
         python_file_name="execute_python_script.py",
+        container_image=None,
     ):
 
         self.func = func
         self.dill_file_name = dill_file_name
         self.json_output_file_name = json_output_file_name
         self.python_file_name = python_file_name
+        self.container_image = container_image
 
-        slurm_default_settings = {
-            "output_file_name": "tool.out",
-            "error_file_name": "tool.err",
-            "jobname": "tool",
-            "time": 600,
-            "partition": "rome",
-            "nodes": 1,
-            "tasks": 1,
-            "cpus_per_task": 1,
-        }
-
-        self.slurm_connector = SLURMAPIConnector(slurm_data, slurm_default_settings)
+        self.slurm_connector = SLURMAPIConnector(slurm_data)
         self.os_connector = OSConnector(os_data)
 
         self.slurm_data = self.slurm_connector.settings
         self.os_data = self.os_connector.settings
+
+        if self.container_image is not None:
+            self.container_image = f"../containers/{self.container_image}"
 
     def _write_python_script(self):
         """Write a Python wrapper script that loads and executes the serialized function.
@@ -120,10 +118,10 @@ class HPCFunc:
         """Generate a bash script for downloading, executing, and uploading results.
 
         The generated script:
-        1. Activates the virtual environment.
+        1. Activates the virtual environment (or uses the container).
         2. Creates and enters a directory named after the object store bucket.
         3. Syncs files from the object store to the local directory.
-        4. Executes the Python wrapper script.
+        4. Executes the Python wrapper script (inside a container if configured).
         5. Syncs the results back to the object store.
 
         Returns
@@ -133,12 +131,26 @@ class HPCFunc:
         """
         file_str = []
         file_str += ["#!/bin/bash"]
-        file_str += ["source .venv/bin/activate"]
-        file_str += [f'mkdir {self.os_data["bucketname"]}']
-        file_str += [f'cd {self.os_data["bucketname"]}']
-        file_str += [f"aws s3 sync s3://{self.os_data['bucketname']}/ ."]
-        file_str += [f"python {self.python_file_name}"]
-        file_str += [f"aws s3 sync . s3://{self.os_data['bucketname']}/"]
+
+        if self.container_image:
+            # Run inside a Singularity/Apptainer container
+            file_str += [
+                f'mkdir {self.os_data["bucketname"]}',
+                f'cd {self.os_data["bucketname"]}',
+                f"aws s3 sync s3://{self.os_data['bucketname']}/ .",
+                f'apptainer run --bind $(pwd) {self.container_image} {self.python_file_name}',
+                f"aws s3 sync . s3://{self.os_data['bucketname']}/",
+            ]
+        else:
+            # Run directly on the cluster
+            file_str += [
+                "source .venv/bin/activate",
+                f'mkdir {self.os_data["bucketname"]}',
+                f'cd {self.os_data["bucketname"]}',
+                f"aws s3 sync s3://{self.os_data['bucketname']}/ .",
+                f"python {self.python_file_name}",
+                f"aws s3 sync . s3://{self.os_data['bucketname']}/",
+            ]
         return "\n".join(file_str)
 
     def __call__(self, *args, **kwargs):

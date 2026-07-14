@@ -1,0 +1,23 @@
+Bootstrap: docker
+From: ghcr.io/astral-sh/uv:python3.13-bookworm-slim
+
+%files
+    pyproject.toml /code/pyproject.toml
+
+%post
+    set -eux
+    apt upgrade
+    #### Update system ####
+    apt-get update && apt-get install -y \
+        git \
+        wget \
+
+    cd /code
+    uv sync
+
+%runscript
+    echo "Container was created $NOW"
+    # echo "Arguments received: $*"
+    # exec echo "$@"
+    . /code/.venv/bin/activate
+    python "$@"
