@@ -26,4 +26,4 @@ hpc_sum = HPCFunc(custom_sum,
                   slurm_data=slurm_data,
                   container_image='langchain_surf.sif')
 
-print(hpc_sum(1, 2))
+print(hpc_sum(1, 2, slurm_resources={'jobname':'new_job'}))

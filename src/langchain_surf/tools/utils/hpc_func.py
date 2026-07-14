@@ -153,7 +153,7 @@ class HPCFunc:
             ]
         return "\n".join(file_str)
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, slurm_resources=None, **kwargs):
         """Execute the wrapped function on an HPC cluster via SLURM.
 
         This method serializes the wrapped function using ``dill``, uploads
@@ -172,6 +172,12 @@ class HPCFunc:
         ----------
         *args : tuple
             Positional arguments to pass to the wrapped function.
+        slurm_resources : dict, optional
+            SLURM resource overrides for the job. Accepted keys include
+            ``partition``, ``time``, ``nodes``, ``tasks``,
+            ``cpus_per_task``, ``jobname``, ``tmp_dir``, and any other
+            setting recognised by ``SLURMAPIConnector``. Defaults to
+            ``None`` (use the connector's default settings).
         **kwargs : dict
             Keyword arguments to pass to the wrapped function.
 
@@ -187,7 +193,17 @@ class HPCFunc:
         >>> hpc_func = HPCFunc(add, slurm_data=slurm_data, os_data=os_data)
         >>> hpc_func(1, 2)
         3
+        >>> hpc_func(1, 2, slurm_resources={'partition': 'debug', 'time': 300, 'cpus_per_task': 4})
+        3
         """
+
+        # Apply SLURM resource overrides temporarily
+        saved_settings = {}
+        if slurm_resources:
+            for key, value in slurm_resources.items():
+                if key in self.slurm_connector.settings:
+                    saved_settings[key] = self.slurm_connector.settings[key]
+                self.slurm_connector.settings[key] = value
 
         try:
             # defined the function to be serialized
@@ -230,6 +246,9 @@ class HPCFunc:
             return result
 
         finally:
+            # Restore original SLURM settings
+            for key, value in saved_settings.items():
+                self.slurm_connector.settings[key] = value
             # Clean up temporary files
             for f in (self.python_file_name, self.dill_file_name):
                 if os.path.exists(f):
