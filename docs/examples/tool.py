@@ -10,12 +10,13 @@ load_dotenv(dotenv_path="../../../.env")
 
 api_key = os.getenv("AIHUB_API_KEY")
 model = "default-text-large"
+slurm_user = os.getenv('SLURM_USER')
 slurm_jwt = os.getenv("SLURM_JWT")
 
 slurm_data = {
     "url": "https://slurm.snellius.surf.nl",
     "api_ver": "v0.0.43",
-    "user_name": "nicolasr",
+    "user_name": slurm_user,
     "slurm_jwt": slurm_jwt,
 }
 

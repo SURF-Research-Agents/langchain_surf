@@ -28,6 +28,7 @@ dependencies = [
     'boto3',
     'dotenv',
     'dill',
+    'awscli'
 ]
 description = "Connect LangChain with SURF services"
 keywords = ["LLM"," AI Agents"," High Performance Computing"]
