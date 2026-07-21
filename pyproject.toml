@@ -28,6 +28,7 @@ dependencies = [
     'boto3',
     'dotenv',
     'dill',
+    'ai4science-client @ git+https://github.com/SURF-ML/ai4science-client.git'
 ]
 description = "Connect LangChain with SURF services"
 keywords = ["LLM"," AI Agents"," High Performance Computing"]
