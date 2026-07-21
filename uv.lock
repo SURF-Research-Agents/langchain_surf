@@ -5,7 +5,7 @@ requires-python = "==3.13.5"
 [[package]]
 name = "ai4science-client"
 version = "0.1.0"
-source = { git = "https://github.com/SURF-ML/ai4science-client.git#7c22625b5b353603857d2d952b3cc951f2ca0b4d" }
+source = { git = "https://github.com/SURF-ML/ai4science-client.git#8e5dbc264c05c4d5021000a8aeec86367acb7b24" }
 dependencies = [
     { name = "pydantic" },
     { name = "python-dotenv" },
